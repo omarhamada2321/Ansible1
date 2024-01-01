@@ -1,0 +1,122 @@
+---
+- name: Get more informetion about the targets machines
+  hosts: all
+  serial: 1
+  tasks:
+    - name: Get current date #first of all we need to know the date to create file everyday using the date in naming file
+      command: date +"%Y-%m-%d"
+      register: current_date
+
+    - name: Create file with current date # second step we created the file with the current date 
+      file:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt  
+        state: touch
+      delegate_to: localhost      
+
+    - name: Get hostname           # thired point we need to know the hostname to orgainze all data related to the targets 
+      ansible.builtin.shell: |
+       echo '======================' &&
+       echo 'hostname:'{{ ansible_hostname }}&&
+       echo '======================='
+       echo 'ips:'{{ ansible_default_ipv4.address }} &&
+       echo '======================='
+              
+      register: hostname_result     # we saved the output in the variable to save to the ouput in the file 
+
+    - name: Display hostname
+      debug:
+        var: hostname_result.stdout
+
+    - name: Save hostname to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt
+        line: "{{ hostname_result.stdout }}"
+      delegate_to: localhost
+    - name: display banar for Cpu usage
+      shell: |
+       echo '===================================================================================================' &&
+       echo '=                            Show CPU Usage Information                                           =' &&
+       echo '==================================================================================================='
+      register: CPU_result
+
+    - name: Save list to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt
+        line: "{{ CPU_result.stdout }}"
+      delegate_to: localhost
+    - name: Run vmstat 1 3
+      command: vmstat 1 3
+      register: CPU_info
+
+    - name: Display CPU information
+      debug:
+        var: CPU_info.stdout_lines
+    - name: Save hostname to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt
+        line: "{{ CPU_info.stdout }}"
+      delegate_to: localhost
+
+    - name: display banar for Memory usage
+      shell: |
+       echo '===================================================================================================' &&
+       echo '=                            Show Memory Usage Information                                        =' &&
+       echo '==================================================================================================='
+      register: memory_result
+
+    - name: Save list to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt
+        line: "{{ memory_result.stdout }}"
+      delegate_to: localhost  
+    - name: Run free -m command
+      command: free -m
+      register: memory_info
+
+    - name: Display memory information
+      debug:
+        var: memory_info.stdout_lines
+    - name: Save hostname to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt
+        line: "{{ memory_info.stdout }}"
+      delegate_to: localhost
+   
+    - name: display banar for Disk space usage 
+      shell: |
+       echo '===================================================================================================' &&
+       echo '=                            Show Disk Space Information                                          =' &&
+       echo '===================================================================================================' 
+      register: disk_result
+
+    - name: Save list to file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt
+        line: "{{ disk_result.stdout }}"
+      delegate_to: localhost
+  
+    - name: Get disk space information         #save all info about the disk space in the file 
+      command: df -h
+      register: disk_space_info
+
+    - name: Display disk space information
+      debug:
+        var: disk_space_info.stdout_lines  
+    - name: Save list of users to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt  
+        line: "{{ disk_space_info.stdout }}"
+      delegate_to: localhost
+    - name: display all users
+      shell: |
+       echo '===================================================================================================' &&
+       echo '=                            Last 10 users in /etc/passwrd                                        =' &&
+       echo '===================================================================================================' &&
+       tail /etc/passwd 
+      register: users_result
+
+    - name: Save list of users to a file
+      lineinfile:
+        path: /home/ansible/Projects/{{ current_date.stdout }}.txt 
+        line: "{{ users_result.stdout }}"
+      delegate_to: localhost
